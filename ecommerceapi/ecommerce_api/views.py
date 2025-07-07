@@ -19,10 +19,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     serializer_class=OrderitemSerializer
     permission_classes=[permissions.IsAuthenticatedOrReadOnly]
     
-    def perform_create(self, serializer):
-        return serializer.save(customer=self.request.user)
-    
-class ShippinngAddress(viewsets.ModelViewSet):
+class ShippinngAddressViewsets(viewsets.ModelViewSet):
     queryset=ShippingAddress.objects.all()
     serializer_class=ShippingAddressSerializer
     permission_classes=[permissions.IsAuthenticatedOrReadOnly]    
