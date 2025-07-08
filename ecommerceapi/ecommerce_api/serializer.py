@@ -2,23 +2,39 @@ from rest_framework import serializers
 
 from .models import ProductModel,OrderItemModel,OrderModel,ShippingAddress
 
+class ProductSummarySerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='productmodel-detail',
+        lookup_field='pk'
+    )
+
+    class Meta:
+        model = ProductModel
+        fields = ['id', 'name', 'url']
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model=ProductModel
         fields='__all__'
   
+
 class OrderitemSerializer(serializers.ModelSerializer):
-    product = serializers.HyperlinkedRelatedField(
-        view_name='productmodel-detail',
-        read_only=True,
-        lookup_field='pk'  # or 'slug' if you're using slugs
+    product = ProductSummarySerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductModel.objects.all(),
+        write_only=True,
+        source='product'
+    )
+
+    order_id = serializers.PrimaryKeyRelatedField(
+        queryset=OrderModel.objects.all(),
+        write_only=True,
+        source='order'
     )
 
     class Meta:
-        model=OrderItemModel
-        fields='__all__'
-
+        model = OrderItemModel
+        fields = ['id', 'order', 'order_id', 'product', 'product_id', 'quantity']        
 class ShippingAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model=ShippingAddress

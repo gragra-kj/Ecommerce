@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>eCommerce API Frontend</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .product { margin-bottom: 10px; }
+    .order-form { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>🛍️ Product List</h1>
+  <div id="productList">Loading products...</div>
+
+  <div class="order-form">
+    <h2>📝 Create Order</h2>
+    <form id="orderForm">
+      <div id="productSelection"></div>
+      <button type="submit">Submit Order</button>
+    </form>
+    <div id="orderResult"></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api/ecommerce";
+    const token = "e1fza4CbR4IsLbatARmCbFIDS42GKu";  // Replace with valid token
+
+    // Fetch and display products
+    fetch(`${API_BASE}/products/`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(products => {
+      const listDiv = document.getElementById("productList");
+      const selectDiv = document.getElementById("productSelection");
+      listDiv.innerHTML = "";
+      selectDiv.innerHTML = "";
+
+      products.forEach(product => {
+        listDiv.innerHTML += `<div class="product"><strong>${product.name}</strong> - ${product.price}</div>`;
+
+        selectDiv.innerHTML += `
+          <div>
+            <label>${product.name}</label>
+            <input type="number" name="product_${product.id}" placeholder="Quantity" min="0" />
+          </div>
+        `;
+      });
+    });
+
+    // Submit order
+    document.getElementById("orderForm").addEventListener("submit", e => {
+      e.preventDefault();
+
+      const form = e.target;
+      const inputs = form.querySelectorAll("input[type='number']");
+      const items = [];
+
+      inputs.forEach(input => {
+        const quantity = parseInt(input.value);
+        const productId = input.name.split("_")[1];
+        if (quantity && quantity > 0) {
+          items.push({ product: parseInt(productId), quantity });
+        }
+      });
+
+      if (items.length === 0) {
+        alert("Please select at least one product with a valid quantity.");
+        return;
+      }
+
+      // Step 1: Create the order
+      fetch(`${API_BASE}/order/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(order => {
+        const orderId = order.id;
+
+        // Step 2: Create order items for each selected product
+        return Promise.all(items.map(item => {
+          return fetch(`${API_BASE}/order-item/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              order: orderId,
+              product: item.product,
+              quantity: item.quantity
+            })
+          });
+        }));
+      })
+      .then(() => {
+        document.getElementById("orderResult").innerText = "✅ Order created successfully!";
+        form.reset();
+      })
+      .catch(err => {
+        document.getElementById("orderResult").innerText = "❌ Failed to create order.";
+        console.error(err);
+      });
+    });
+  </script>
+
+</body>
+</html>

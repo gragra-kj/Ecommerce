@@ -3,10 +3,16 @@ from .models import OrderItemModel,OrderModel,ProductModel,ShippingAddress
 from .serializer import OrderitemSerializer,OrderSerializer,ProductSerializer,ShippingAddressSerializer
 from rest_framework import viewsets,permissions
 
+def ecommerce_frontend_view(request):
+    return render(request, 'ecommerce_api/frontend.html')
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset=OrderModel.objects.all()
     serializer_class=OrderSerializer
     permission_classes=[permissions.IsAuthenticatedOrReadOnly]
+    def perform_create(self, serializer):
+        serializer.save(customer=self.request.user)
+
     
     
 class ProductViewSet(viewsets.ModelViewSet):
